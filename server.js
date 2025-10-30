@@ -3,19 +3,16 @@ const cors = require("cors");
 const db = require("./db");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server berjalan di port ${PORT}`);
-});
-
 
 app.use(cors());
 app.use(express.json());
 
+// Route test agar Railway tahu app aktif
 app.get("/", (req, res) => {
   res.send("Backend Donat Homemade 🍩 berjalan!");
 });
 
+// Endpoint pesanan
 app.post("/orders", (req, res) => {
   const { nama, nohp, jumlah, catatan } = req.body;
 
@@ -33,4 +30,6 @@ app.post("/orders", (req, res) => {
   });
 });
 
+// ✅ Hanya 1 app.listen — penting banget untuk Railway
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server berjalan di port ${PORT}`));
