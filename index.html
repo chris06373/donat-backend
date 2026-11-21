@@ -1,1 +1,1254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Donut Shop - Online Ordering</title>
 
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #fff8f3;
+    color: #382b27;
+}
+
+button, input, select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.app {
+    max-width: 1100px;
+    margin: auto;
+    min-height: 100vh;
+    background: white;
+    box-shadow: 0 0 25px #00000008;
+}
+
+/* HEADER */
+
+.header {
+    background: #8d4935;
+    color: white;
+    padding: 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo {
+    font-size: 23px;
+    font-weight: bold;
+}
+
+.logo small {
+    display: block;
+    font-size: 11px;
+    font-weight: normal;
+    margin-top: 5px;
+}
+
+.cart-button {
+    background: white;
+    color: #8d4935;
+    border: none;
+    padding: 11px 16px;
+    border-radius: 25px;
+    font-weight: bold;
+}
+
+/* NAVIGATION */
+
+.nav {
+    display: flex;
+    padding: 12px;
+    gap: 8px;
+    border-bottom: 1px solid #eee;
+    overflow-x: auto;
+}
+
+.nav button {
+    border: none;
+    background: #f8eee8;
+    padding: 11px 17px;
+    border-radius: 20px;
+    white-space: nowrap;
+    color: #75574d;
+}
+
+.nav button.active {
+    background: #8d4935;
+    color: white;
+}
+
+/* CONTENT */
+
+.content {
+    padding: 25px;
+    min-height: 650px;
+}
+
+.page-title {
+    font-size: 23px;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    color: #999;
+    font-size: 13px;
+    margin-bottom: 22px;
+}
+
+/* PRODUCT */
+
+.products {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.product {
+    border: 1px solid #f0e7e2;
+    border-radius: 13px;
+    overflow: hidden;
+    background: white;
+}
+
+.product img {
+    width: 100%;
+    height: 155px;
+    object-fit: cover;
+    background: #f8eee8;
+}
+
+.product-info {
+    padding: 14px;
+}
+
+.product h3 {
+    font-size: 15px;
+    margin-bottom: 7px;
+}
+
+.product p {
+    font-size: 12px;
+    color: #999;
+    min-height: 30px;
+}
+
+.price {
+    color: #a0523b;
+    font-weight: bold;
+    margin: 12px 0;
+}
+
+.btn {
+    border: none;
+    background: #8d4935;
+    color: white;
+    padding: 11px;
+    border-radius: 7px;
+    width: 100%;
+}
+
+.btn:hover {
+    background: #713725;
+}
+
+/* FORM */
+
+.panel {
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 7px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    outline-color: #a0523b;
+    background: white;
+}
+
+.full {
+    grid-column: 1 / -1;
+}
+
+/* CART */
+
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.cart-item small {
+    color: #999;
+}
+
+.qty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.qty button {
+    border: none;
+    background: #f4e6df;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.remove {
+    background: #ffe9e9 !important;
+    color: #c33;
+}
+
+.total {
+    padding: 18px 0;
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 17px;
+}
+
+/* HISTORY */
+
+.toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 17px;
+}
+
+.toolbar input,
+.toolbar select {
+    padding: 11px;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    min-width: 0;
+}
+
+.toolbar input {
+    flex: 1;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 650px;
+}
+
+th, td {
+    padding: 13px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+}
+
+th {
+    background: #faf4f0;
+}
+
+.status {
+    padding: 6px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.Pending {
+    background: #fff1cc;
+    color: #9a6700;
+}
+
+.Diproses {
+    background: #e3edff;
+    color: #2457a6;
+}
+
+.Selesai {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.Dibatalkan {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 20px;
+}
+
+.pagination button {
+    border: 1px solid #ddd;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.pagination button.active {
+    background: #8d4935;
+    color: white;
+}
+
+.empty {
+    text-align: center;
+    padding: 35px;
+    color: #999;
+}
+
+/* MOBILE */
+
+@media(max-width: 700px) {
+    .header {
+        padding: 18px;
+    }
+
+    .content {
+        padding: 17px;
+        padding-bottom: 90px;
+    }
+
+    .products {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 11px;
+    }
+
+    .product img {
+        height: 125px;
+    }
+
+    .product-info {
+        padding: 10px;
+    }
+
+    .product h3 {
+        font-size: 13px;
+    }
+
+    .product p {
+        font-size: 11px;
+    }
+
+    .product .btn {
+        font-size: 12px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .full {
+        grid-column: auto;
+    }
+
+    .toolbar {
+        flex-direction: column;
+    }
+
+    .nav {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+    }
+}
+
+@media(max-width: 360px) {
+    .products {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <header class="header">
+        <div class="logo">
+            🍩 DONUT HOUSE
+            <small>Fresh Donuts Every Day</small>
+        </div>
+
+        <button class="cart-button" onclick="showPage('cart')">
+            🛒 Cart (<span id="cartCount">0</span>)
+        </button>
+    </header>
+
+    <nav class="nav">
+        <button class="active" data-page="home"
+            onclick="showPage('home',this)">🍩 Menu</button>
+
+        <button data-page="cart"
+            onclick="showPage('cart',this)">🛒 Keranjang</button>
+
+        <button data-page="history"
+            onclick="showPage('history',this)">📋 Riwayat</button>
+    </nav>
+
+    <main class="content" id="content"></main>
+
+</div>
+
+<script>
+
+/* =========================
+   PRODUCT DATA
+========================= */
+
+const products = [
+    {
+        id: 1,
+        name: "Chocolate Donut",
+        price: 12000,
+        desc: "Donat cokelat premium",
+        image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=500"
+    },
+    {
+        id: 2,
+        name: "Strawberry Donut",
+        price: 13000,
+        desc: "Donat strawberry glaze",
+        image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=500"
+    },
+    {
+        id: 3,
+        name: "Vanilla Donut",
+        price: 11000,
+        desc: "Donat vanilla cream",
+        image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=500"
+    },
+    {
+        id: 4,
+        name: "Matcha Donut",
+        price: 15000,
+        desc: "Donat matcha Jepang",
+        image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=500"
+    },
+    {
+        id: 5,
+        name: "Cheese Donut",
+        price: 14000,
+        desc: "Donat topping keju",
+        image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=500"
+    },
+    {
+        id: 6,
+        name: "Oreo Donut",
+        price: 15000,
+        desc: "Donat topping Oreo",
+        image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=500"
+    }
+];
+
+
+/* =========================
+   LOCAL STORAGE
+========================= */
+
+let cart = JSON.parse(localStorage.getItem("donut_cart")) || [];
+
+let orders = JSON.parse(localStorage.getItem("donut_orders")) || [];
+
+let currentPage = 1;
+
+const perPage = 5;
+
+let searchKeyword = "";
+
+
+function saveData() {
+    localStorage.setItem("donut_cart", JSON.stringify(cart));
+    localStorage.setItem("donut_orders", JSON.stringify(orders));
+}
+
+
+function rupiah(value) {
+    return "Rp " + Number(value).toLocaleString("id-ID");
+}
+
+
+/* =========================
+   NAVIGATION
+========================= */
+
+function showPage(page, button) {
+
+    document.querySelectorAll(".nav button")
+        .forEach(btn => btn.classList.remove("active"));
+
+    const navButton = button ||
+        document.querySelector(`[data-page="${page}"]`);
+
+    if (navButton) navButton.classList.add("active");
+
+    if (page === "home") renderProducts();
+    if (page === "cart") renderCart();
+    if (page === "history") renderHistory();
+
+}
+
+
+/* =========================
+   PRODUCT CATALOG
+========================= */
+
+function renderProducts() {
+
+    document.getElementById("content").innerHTML = `
+        <h2 class="page-title">Our Donuts 🍩</h2>
+        <p class="subtitle">
+            Pilih donat favoritmu dan pesan sekarang.
+        </p>
+
+        <div class="products">
+            ${products.map(p => `
+                <div class="product">
+
+                    <img src="${p.image}" alt="${p.name}">
+
+                    <div class="product-info">
+
+                        <h3>${p.name}</h3>
+
+                        <p>${p.desc}</p>
+
+                        <div class="price">
+                            ${rupiah(p.price)}
+                        </div>
+
+                        <button class="btn"
+                            onclick="addCart(${p.id})">
+                            + Tambah
+                        </button>
+
+                    </div>
+                </div>
+            `).join("")}
+        </div>
+    `;
+}
+
+
+/* =========================
+   CART
+========================= */
+
+function addCart(id) {
+
+    const item = cart.find(x => x.id === id);
+
+    if (item) {
+        item.qty++;
+    } else {
+        cart.push({id, qty: 1});
+    }
+
+    saveData();
+    updateCartCount();
+
+    alert("Donat berhasil ditambahkan!");
+
+}
+
+
+function updateCartCount() {
+
+    const count = cart.reduce((sum, x) => sum + x.qty, 0);
+
+    document.getElementById("cartCount").textContent = count;
+
+}
+
+
+function cartSubtotal() {
+
+    return cart.reduce((sum, item) => {
+
+        const product = products.find(p => p.id === item.id);
+
+        return sum + (product.price * item.qty);
+
+    }, 0);
+
+}
+
+
+function renderCart() {
+
+    let html = `
+        <h2 class="page-title">Keranjang Pesanan</h2>
+        <p class="subtitle">Periksa pesanan sebelum checkout.</p>
+
+        <div class="panel">
+    `;
+
+    if (!cart.length) {
+
+        html += `<div class="empty">Keranjang masih kosong 🍩</div>`;
+
+    } else {
+
+        cart.forEach(item => {
+
+            const p = products.find(x => x.id === item.id);
+
+            html += `
+                <div class="cart-item">
+
+                    <div>
+                        <b>${p.name}</b><br>
+                        <small>${rupiah(p.price)}</small>
+                    </div>
+
+                    <div class="qty">
+
+                        <button onclick="changeQty(${p.id},-1)">−</button>
+
+                        ${item.qty}
+
+                        <button onclick="changeQty(${p.id},1)">+</button>
+
+                        <button class="remove"
+                            onclick="removeCart(${p.id})">×</button>
+
+                    </div>
+
+                </div>
+            `;
+
+        });
+
+        html += `
+            <div class="total">
+                <span>Subtotal</span>
+                <span>${rupiah(cartSubtotal())}</span>
+            </div>
+
+            <button class="btn" onclick="renderCheckout()">
+                Lanjut Checkout
+            </button>
+        `;
+    }
+
+    html += `</div>`;
+
+    document.getElementById("content").innerHTML = html;
+
+}
+
+
+function changeQty(id, change) {
+
+    const item = cart.find(x => x.id === id);
+
+    if (!item) return;
+
+    item.qty += change;
+
+    if (item.qty <= 0) {
+        cart = cart.filter(x => x.id !== id);
+    }
+
+    saveData();
+    updateCartCount();
+    renderCart();
+
+}
+
+
+function removeCart(id) {
+
+    cart = cart.filter(x => x.id !== id);
+
+    saveData();
+    updateCartCount();
+    renderCart();
+
+}
+
+
+/* =========================
+   CHECKOUT
+========================= */
+
+function renderCheckout() {
+
+    document.getElementById("content").innerHTML = `
+
+        <h2 class="page-title">Checkout</h2>
+
+        <p class="subtitle">Lengkapi informasi pemesanan.</p>
+
+        <div class="panel">
+
+            <div class="form-group">
+                <label>Nama Pelanggan</label>
+                <input id="customer" placeholder="Nama lengkap">
+            </div>
+
+            <div class="form-group">
+                <label>No. WhatsApp</label>
+                <input id="phone" type="tel" placeholder="08xxxxxxxxxx">
+            </div>
+
+            <div class="form-group">
+                <label>Jenis Pesanan</label>
+
+                <select id="orderType" onchange="toggleOrderType()">
+                    <option value="Take Away">Take Away</option>
+                    <option value="Request PO">Request PO</option>
+                </select>
+            </div>
+
+            <div id="takeawayFields">
+
+                <div class="form-group">
+                    <label>Alamat Pengantaran / Pengambilan</label>
+                    <input id="address" placeholder="Alamat lengkap">
+                </div>
+
+                <div class="form-group">
+                    <label>Biaya Ongkir (Rp)</label>
+                    <input id="shipping" type="number"
+                        min="0" value="0">
+                </div>
+
+            </div>
+
+            <div id="poFields" style="display:none">
+
+                <div class="form-group">
+                    <label>Nomor PO</label>
+                    <input id="poNumber" placeholder="PO-0001">
+                </div>
+
+                <div class="form-group">
+                    <label>Tanggal PO</label>
+                    <input id="poDate" type="date">
+                </div>
+
+            </div>
+
+            <div class="form-group">
+                <label>Catatan Pesanan</label>
+                <input id="notes" placeholder="Catatan tambahan">
+            </div>
+
+            <div class="total">
+                <span>Total Donat</span>
+                <span>${rupiah(cartSubtotal())}</span>
+            </div>
+
+            <div class="total">
+                <span>Biaya Ongkir</span>
+                <span id="shippingDisplay">${rupiah(0)}</span>
+            </div>
+
+            <div class="total">
+                <span>Total Pembayaran</span>
+                <span id="grandTotal">${rupiah(cartSubtotal())}</span>
+            </div>
+
+            <button class="btn" onclick="submitOrder()">
+                Konfirmasi Pesanan
+            </button>
+
+        </div>
+    `;
+
+    document.getElementById("shipping").addEventListener(
+        "input", updateCheckoutTotal
+    );
+
+}
+
+
+function toggleOrderType() {
+
+    const type = document.getElementById("orderType").value;
+
+    document.getElementById("takeawayFields").style.display =
+        type === "Take Away" ? "block" : "none";
+
+    document.getElementById("poFields").style.display =
+        type === "Request PO" ? "block" : "none";
+
+    updateCheckoutTotal();
+
+}
+
+
+function updateCheckoutTotal() {
+
+    const type = document.getElementById("orderType").value;
+
+    const shipping = type === "Take Away"
+        ? Math.max(0, Number(document.getElementById("shipping").value) || 0)
+        : 0;
+
+    document.getElementById("shippingDisplay").textContent =
+        rupiah(shipping);
+
+    document.getElementById("grandTotal").textContent =
+        rupiah(cartSubtotal() + shipping);
+
+}
+
+
+/* =========================
+   SAVE ORDER
+========================= */
+
+function submitOrder() {
+
+    if (!cart.length) {
+        alert("Keranjang kosong!");
+        return;
+    }
+
+    const customer = document.getElementById("customer").value.trim();
+
+    const phone = document.getElementById("phone").value.trim();
+
+    const type = document.getElementById("orderType").value;
+
+    const shipping = type === "Take Away"
+        ? Math.max(0, Number(document.getElementById("shipping").value) || 0)
+        : 0;
+
+    if (!customer || !phone) {
+        alert("Nama dan nomor WhatsApp wajib diisi!");
+        return;
+    }
+
+    const poNumber = document.getElementById("poNumber").value.trim();
+
+    const poDate = document.getElementById("poDate").value;
+
+    if (type === "Request PO" && (!poNumber || !poDate)) {
+        alert("Nomor PO dan tanggal PO wajib diisi!");
+        return;
+    }
+
+    const items = cart.map(item => {
+
+        const p = products.find(x => x.id === item.id);
+
+        return {
+            id: p.id,
+            name: p.name,
+            price: p.price,
+            qty: item.qty
+        };
+
+    });
+
+    const subtotal = cartSubtotal();
+
+    const order = {
+
+        id: "ORD-" + Date.now(),
+
+        date: new Date().toISOString(),
+
+        customer,
+        phone,
+        type,
+
+        address: type === "Take Away"
+            ? document.getElementById("address").value
+            : "",
+
+        shipping,
+
+        poNumber: type === "Request PO" ? poNumber : "",
+        poDate: type === "Request PO" ? poDate : "",
+
+        notes: document.getElementById("notes").value,
+
+        items,
+
+        subtotal,
+
+        total: subtotal + shipping,
+
+        status: "Pending"
+
+    };
+
+    orders.unshift(order);
+
+    cart = [];
+
+    saveData();
+    updateCartCount();
+
+    alert("Pesanan berhasil dibuat!");
+
+    showPage("history");
+
+}
+
+
+/* =========================
+   ORDER HISTORY
+========================= */
+
+function renderHistory() {
+
+    currentPage = 1;
+    searchKeyword = "";
+
+    document.getElementById("content").innerHTML = `
+
+        <h2 class="page-title">Riwayat Pemesanan</h2>
+
+        <p class="subtitle">
+            Daftar seluruh transaksi pemesanan donat.
+        </p>
+
+        <div class="toolbar">
+
+            <input id="searchOrder"
+                placeholder="Cari nomor order / pelanggan..."
+                oninput="searchHistory(this.value)">
+
+            <select id="statusFilter" onchange="filterHistory()">
+                <option value="">Semua Status</option>
+                <option>Pending</option>
+                <option>Diproses</option>
+                <option>Selesai</option>
+                <option>Dibatalkan</option>
+            </select>
+
+        </div>
+
+        <div class="table-wrap">
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>No. Order</th>
+                        <th>Pelanggan</th>
+                        <th>Jenis</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+
+                <tbody id="historyBody"></tbody>
+
+            </table>
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+
+    `;
+
+    renderHistoryRows();
+
+}
+
+
+function getFilteredOrders() {
+
+    const keyword = searchKeyword.toLowerCase();
+
+    const status = document.getElementById("statusFilter")?.value || "";
+
+    return orders.filter(o => {
+
+        const matchSearch =
+            o.id.toLowerCase().includes(keyword) ||
+            o.customer.toLowerCase().includes(keyword) ||
+            o.phone.toLowerCase().includes(keyword);
+
+        const matchStatus = !status || o.status === status;
+
+        return matchSearch && matchStatus;
+
+    });
+
+}
+
+
+function searchHistory(value) {
+
+    searchKeyword = value;
+
+    currentPage = 1;
+
+    renderHistoryRows();
+
+}
+
+
+function filterHistory() {
+
+    currentPage = 1;
+
+    renderHistoryRows();
+
+}
+
+
+function renderHistoryRows() {
+
+    const filtered = getFilteredOrders();
+
+    const totalPages = Math.ceil(filtered.length / perPage);
+
+    if (totalPages && currentPage > totalPages) {
+        currentPage = totalPages;
+    }
+
+    const start = (currentPage - 1) * perPage;
+
+    const data = filtered.slice(start, start + perPage);
+
+    const tbody = document.getElementById("historyBody");
+
+    if (!data.length) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty">
+                    Belum ada data pemesanan.
+                </td>
+            </tr>
+        `;
+
+    } else {
+
+        tbody.innerHTML = data.map(o => `
+
+            <tr>
+
+                <td>${o.id}</td>
+
+                <td>${escapeHTML(o.customer)}</td>
+
+                <td>${o.type}</td>
+
+                <td>${rupiah(o.total)}</td>
+
+                <td>
+                    <span class="status ${o.status}">
+                        ${o.status}
+                    </span>
+                </td>
+
+                <td>
+                    <button onclick="viewOrder('${o.id}')">
+                        Detail
+                    </button>
+                </td>
+
+            </tr>
+
+        `).join("");
+
+    }
+
+    let pagination = "";
+
+    for (let i = 1; i <= totalPages; i++) {
+
+        pagination += `
+            <button class="${i === currentPage ? "active" : ""}"
+                onclick="changePage(${i})">
+                ${i}
+            </button>
+        `;
+
+    }
+
+    document.getElementById("pagination").innerHTML = pagination;
+
+}
+
+
+function changePage(page) {
+
+    currentPage = page;
+
+    renderHistoryRows();
+
+}
+
+
+/* =========================
+   ORDER DETAIL
+========================= */
+
+function viewOrder(id) {
+
+    const o = orders.find(x => x.id === id);
+
+    if (!o) return;
+
+    document.getElementById("content").innerHTML = `
+
+        <h2 class="page-title">Detail Pesanan</h2>
+
+        <p class="subtitle">${o.id}</p>
+
+        <div class="panel">
+
+            <p><b>Pelanggan:</b> ${escapeHTML(o.customer)}</p>
+
+            <p><b>WhatsApp:</b> ${escapeHTML(o.phone)}</p>
+
+            <p><b>Tanggal:</b> ${new Date(o.date).toLocaleString("id-ID")}</p>
+
+            <p><b>Jenis:</b> ${o.type}</p>
+
+            ${o.poNumber ? `<p><b>No. PO:</b> ${escapeHTML(o.poNumber)}</p>` : ""}
+
+            ${o.poDate ? `<p><b>Tanggal PO:</b> ${o.poDate}</p>` : ""}
+
+            ${o.address ? `<p><b>Alamat:</b> ${escapeHTML(o.address)}</p>` : ""}
+
+            <hr style="margin:15px 0">
+
+            ${o.items.map(i => `
+                <div class="cart-item">
+                    <span>${escapeHTML(i.name)} x ${i.qty}</span>
+                    <b>${rupiah(i.price * i.qty)}</b>
+                </div>
+            `).join("")}
+
+            <div class="total">
+                <span>Subtotal</span>
+                <span>${rupiah(o.subtotal)}</span>
+            </div>
+
+            <div class="total">
+                <span>Ongkir</span>
+                <span>${rupiah(o.shipping)}</span>
+            </div>
+
+            <div class="total">
+                <span>Total</span>
+                <span>${rupiah(o.total)}</span>
+            </div>
+
+            <p><b>Catatan:</b> ${escapeHTML(o.notes || "-")}</p>
+
+            <div class="form-group" style="margin-top:20px">
+                <label>Update Status</label>
+
+                <select id="updateStatus">
+                    ${["Pending","Diproses","Selesai","Dibatalkan"].map(s =>
+                        `<option ${o.status === s ? "selected" : ""}>${s}</option>`
+                    ).join("")}
+                </select>
+            </div>
+
+            <button class="btn" onclick="updateOrderStatus('${o.id}')">
+                Simpan Status
+            </button>
+
+            <button class="btn"
+                style="margin-top:10px;background:#777"
+                onclick="showPage('history')">
+                Kembali
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+
+function updateOrderStatus(id) {
+
+    const order = orders.find(o => o.id === id);
+
+    order.status = document.getElementById("updateStatus").value;
+
+    saveData();
+
+    alert("Status berhasil diperbarui!");
+
+    showPage("history");
+
+}
+
+
+/* =========================
+   HTML ESCAPE
+========================= */
+
+function escapeHTML(value) {
+
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+    })[char]);
+
+}
+
+
+/* =========================
+   INITIALIZATION
+========================= */
+
+updateCartCount();
+
+showPage("home");
+
+</script>
+
+</body>
+</html>
