@@ -60,6 +60,27 @@ button {
     opacity: 0.9;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.clear-storage-btn {
+    background: #5b2b1d;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    padding: 9px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.clear-storage-btn:hover {
+    background: #421d12;
+}
+
 .cart-button {
     background: white;
     color: #8d4935;
@@ -297,6 +318,29 @@ button {
     border-radius: 7px;
     outline-color: #a0523b;
     background: white;
+}
+
+.form-group input:disabled,
+.form-group select:disabled {
+    background: #f5f5f5;
+    color: #888;
+    cursor: not-allowed;
+}
+
+.field-hint {
+    display: block;
+    font-size: 11px;
+    color: #777;
+    margin-top: 5px;
+}
+
+.locked-note {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    margin-bottom: 12px;
 }
 
 /* CART */
@@ -568,6 +612,49 @@ th {
     margin: 6px 0 12px;
 }
 
+/* MODAL ADMIN WA */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 60;
+}
+
+.modal-backdrop.show {
+    display: flex;
+}
+
+.modal-card {
+    width: 100%;
+    max-width: 420px;
+    background: white;
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-card h3 {
+    margin-bottom: 6px;
+    font-size: 18px;
+}
+
+.modal-card p {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 14px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+}
+
 /* MOBILE */
 
 @media(max-width: 700px) {
@@ -577,6 +664,11 @@ th {
 
     .cart-button {
         display: none;
+    }
+
+    .clear-storage-btn {
+        padding: 8px 10px;
+        font-size: 11px;
     }
 
     .content {
@@ -690,7 +782,8 @@ th {
     .nav,
     .invoice-actions,
     .mobile-cart-bar,
-    .toast {
+    .toast,
+    .modal-backdrop {
         display: none !important;
     }
 
@@ -734,9 +827,14 @@ th {
             <small>Fresh Donuts Every Day</small>
         </div>
 
-        <button class="cart-button" onclick="showPage('cart')">
-            🛒 Cart (<span id="cartCount">0</span>)
-        </button>
+        <div class="header-actions">
+            <button type="button" class="clear-storage-btn" onclick="clearStorageData()">
+                🗑 Clear Storage
+            </button>
+            <button class="cart-button" onclick="showPage('cart')">
+                🛒 Cart (<span id="cartCount">0</span>)
+            </button>
+        </div>
     </header>
 
     <nav class="nav">
@@ -762,6 +860,23 @@ th {
 
 </div>
 
+<!-- MODAL INPUT NOMOR ADMIN WHATSAPP -->
+<div class="modal-backdrop" id="adminWaModal">
+    <div class="modal-card">
+        <h3>Nomor WhatsApp Admin</h3>
+        <p>Masukkan nomor WhatsApp admin terlebih dahulu sebelum mengirim pesanan.</p>
+        <div class="form-group" style="margin-bottom:0">
+            <label for="modalAdminWa">Nomor WA Admin (628... atau 08...)</label>
+            <input id="modalAdminWa" type="tel" placeholder="Contoh: 081234567890 atau 6281234567890">
+            <small class="field-hint">Nomor akan disimpan otomatis di penyimpanan lokal browser.</small>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeAdminWaModal()">Batal</button>
+            <button type="button" class="btn btn-wa" onclick="confirmAdminWaAndSend()">Simpan & Kirim WA</button>
+        </div>
+    </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -770,7 +885,12 @@ th {
    STORE CONFIG & PRODUCT DATA
 ========================= */
 
-const STORE_WHATSAPP = "6281234567890"; // Ganti dengan nomor WA toko (format 62...)
+const STORAGE_KEYS = {
+    products: "donut_products",
+    cart: "donut_cart",
+    orders: "donut_orders",
+    adminWa: "donut_admin_wa"
+};
 
 const defaultProducts = [
     {
@@ -824,27 +944,49 @@ const defaultProducts = [
 ];
 
 /* =========================
-   LOCAL STORAGE
+   LOCAL STORAGE & CLEAR STORAGE
 ========================= */
 
-let products = JSON.parse(localStorage.getItem("donut_products"));
+let products = JSON.parse(localStorage.getItem(STORAGE_KEYS.products));
 if (!Array.isArray(products) || !products.length) {
     products = structuredClone(defaultProducts);
 }
 
-let cart = JSON.parse(localStorage.getItem("donut_cart")) || [];
-let orders = JSON.parse(localStorage.getItem("donut_orders")) || [];
+let cart = JSON.parse(localStorage.getItem(STORAGE_KEYS.cart)) || [];
+let orders = JSON.parse(localStorage.getItem(STORAGE_KEYS.orders)) || [];
+let adminWhatsApp = localStorage.getItem(STORAGE_KEYS.adminWa) || "";
 
 let currentPage = "home";
 let historyPage = 1;
 const perPage = 5;
 let searchKeyword = "";
 let toastTimer = null;
+let pendingWaCallback = null;
 
 function saveData() {
-    localStorage.setItem("donut_products", JSON.stringify(products));
-    localStorage.setItem("donut_cart", JSON.stringify(cart));
-    localStorage.setItem("donut_orders", JSON.stringify(orders));
+    localStorage.setItem(STORAGE_KEYS.products, JSON.stringify(products));
+    localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(cart));
+    localStorage.setItem(STORAGE_KEYS.orders, JSON.stringify(orders));
+    localStorage.setItem(STORAGE_KEYS.adminWa, adminWhatsApp);
+}
+
+function clearStorageData() {
+    const ok = confirm("Hapus semua data lokal (keranjang, riwayat pesanan, nomor admin, dan reset stok produk)?");
+    if (!ok) return;
+
+    Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+
+    products = structuredClone(defaultProducts);
+    cart = [];
+    orders = [];
+    adminWhatsApp = "";
+    historyPage = 1;
+    searchKeyword = "";
+
+    saveData();
+    updateCartCount();
+    showToast("Storage berhasil dibersihkan & direset!");
+    showPage("home");
 }
 
 function showToast(message) {
@@ -854,7 +996,7 @@ function showToast(message) {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
         el.classList.remove("show");
-    }, 2000);
+    }, 2200);
 }
 
 function rupiah(value) {
@@ -872,6 +1014,87 @@ function getProduct(id) {
 function getCartQty(id) {
     const found = cart.find(x => x.id === id);
     return found ? found.qty : 0;
+}
+
+/* =========================
+   WHATSAPP ADMIN VALIDATION
+========================= */
+
+function normalizeWhatsAppNumber(raw) {
+    const digits = String(raw || "").replace(/\D/g, "");
+    if (!digits) return "";
+    if (digits.startsWith("0")) {
+        return "62" + digits.slice(1);
+    }
+    return digits;
+}
+
+function isValidWhatsAppNumber(normalized) {
+    return /^62\d{8,14}$/.test(normalized);
+}
+
+function openAdminWaModal(onValid) {
+    pendingWaCallback = onValid;
+    const input = document.getElementById("modalAdminWa");
+    input.value = adminWhatsApp || "";
+    document.getElementById("adminWaModal").classList.add("show");
+    input.focus();
+}
+
+function closeAdminWaModal() {
+    pendingWaCallback = null;
+    document.getElementById("adminWaModal").classList.remove("show");
+}
+
+function confirmAdminWaAndSend() {
+    const input = document.getElementById("modalAdminWa");
+    const normalized = normalizeWhatsAppNumber(input.value);
+
+    if (!isValidWhatsAppNumber(normalized)) {
+        showToast("Nomor WA admin tidak valid! Contoh: 081234567890");
+        input.focus();
+        return;
+    }
+
+    adminWhatsApp = normalized;
+    saveData();
+
+    const checkoutInput = document.getElementById("adminPhone");
+    if (checkoutInput) {
+        checkoutInput.value = normalized;
+    }
+
+    const callback = pendingWaCallback;
+    closeAdminWaModal();
+
+    if (typeof callback === "function") {
+        callback(normalized);
+    }
+}
+
+function ensureAdminWhatsApp(onReady, explicitRawValue = "") {
+    if (explicitRawValue !== undefined && explicitRawValue !== null && String(explicitRawValue).trim() !== "") {
+        const normalized = normalizeWhatsAppNumber(explicitRawValue);
+        if (!isValidWhatsAppNumber(normalized)) {
+            showToast("Nomor WA admin tidak valid! Masukkan dulu nomor admin.");
+            openAdminWaModal(onReady);
+            return;
+        }
+        adminWhatsApp = normalized;
+        saveData();
+        onReady(normalized);
+        return;
+    }
+
+    const normalizedExisting = normalizeWhatsAppNumber(adminWhatsApp);
+    if (isValidWhatsAppNumber(normalizedExisting)) {
+        adminWhatsApp = normalizedExisting;
+        onReady(normalizedExisting);
+        return;
+    }
+
+    showToast("Masukkan dahulu nomor WhatsApp admin!");
+    openAdminWaModal(onReady);
 }
 
 /* =========================
@@ -1087,8 +1310,14 @@ function renderCheckout() {
             </div>
 
             <div class="form-group">
-                <label>No. WhatsApp</label>
+                <label>No. WhatsApp Pelanggan</label>
                 <input id="phone" type="tel" placeholder="08xxxxxxxxxx">
+            </div>
+
+            <div class="form-group">
+                <label>Nomor WhatsApp Admin (Wajib untuk Kirim WA)</label>
+                <input id="adminPhone" type="tel" value="${escapeHTML(adminWhatsApp)}" placeholder="Contoh: 081234567890 atau 6281234567890">
+                <small class="field-hint">Pesanan hanya bisa dikirim ke WhatsApp setelah nomor admin diisi.</small>
             </div>
 
             <div class="form-group">
@@ -1147,7 +1376,7 @@ function renderCheckout() {
             </button>
 
             <button type="button" class="btn btn-wa" style="margin-top:10px" onclick="submitOrder(true)">
-                💬 Konfirmasi & Kirim ke WhatsApp
+                💬 Konfirmasi & Kirim ke WhatsApp Admin
             </button>
 
             <button type="button" class="btn btn-secondary" style="margin-top:10px" onclick="showPage('cart')">
@@ -1176,9 +1405,9 @@ function updateCheckoutTotal() {
     document.getElementById("grandTotal").textContent = rupiah(cartSubtotal() + shipping);
 }
 
-function buildWhatsAppOrderUrl(order) {
+function buildWhatsAppOrderUrl(order, targetAdminNumber) {
     const lines = [
-        `Halo *Donut House*, saya ingin konfirmasi pesanan:`,
+        `Halo Admin *Donut House*, ada pesanan baru:`,
         `Invoice: *${order.id}*`,
         `Nama: ${order.customer} (${order.phone})`,
         `Tipe: ${order.type}`,
@@ -1194,7 +1423,7 @@ function buildWhatsAppOrderUrl(order) {
         ...(order.notes ? [`Catatan: ${order.notes}`] : [])
     ];
 
-    return `https://wa.me/${STORE_WHATSAPP}?text=${encodeURIComponent(lines.join("\n"))}`;
+    return `https://wa.me/${targetAdminNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
 }
 
 /* =========================
@@ -1207,7 +1436,6 @@ function submitOrder(openWhatsApp = false) {
         return;
     }
 
-    // Validasi ketersediaan stok sebelum mengurangi qty
     for (const item of cart) {
         const product = getProduct(item.id);
         if (!product || item.qty > product.stock) {
@@ -1218,6 +1446,7 @@ function submitOrder(openWhatsApp = false) {
 
     const customer = document.getElementById("customer").value.trim();
     const phone = document.getElementById("phone").value.trim();
+    const adminInputVal = document.getElementById("adminPhone")?.value.trim() || "";
     const type = document.getElementById("orderType").value;
 
     const shipping = type === "Take Away"
@@ -1225,7 +1454,7 @@ function submitOrder(openWhatsApp = false) {
         : 0;
 
     if (!customer || !phone) {
-        showToast("Nama dan nomor WhatsApp wajib diisi!");
+        showToast("Nama dan nomor WhatsApp pelanggan wajib diisi!");
         return;
     }
 
@@ -1251,51 +1480,65 @@ function submitOrder(openWhatsApp = false) {
         return;
     }
 
-    const items = cart.map(item => {
-        const p = getProduct(item.id);
-        // Kurangi stok produk sesuai qty yang dipesan
-        p.stock = Math.max(0, p.stock - item.qty);
+    const finalizeOrder = (resolvedAdminWa) => {
+        const items = cart.map(item => {
+            const p = getProduct(item.id);
+            p.stock = Math.max(0, p.stock - item.qty);
 
-        return {
-            id: p.id,
-            name: p.name,
-            price: p.price,
-            qty: item.qty
+            return {
+                id: p.id,
+                name: p.name,
+                price: p.price,
+                qty: item.qty
+            };
+        });
+
+        const subtotal = cartSubtotal();
+        const initialStatus = type === "Makan di Tempat" ? "Selesai" : "Pending";
+
+        const order = {
+            id: "INV-" + Date.now(),
+            date: new Date().toISOString(),
+            customer,
+            phone,
+            adminPhone: resolvedAdminWa,
+            type,
+            address,
+            shipping,
+            poNumber,
+            poDate,
+            notes: document.getElementById("notes").value.trim(),
+            items,
+            subtotal,
+            total: subtotal + shipping,
+            status: initialStatus
         };
-    });
 
-    const subtotal = cartSubtotal();
-    const initialStatus = type === "Makan di Tempat" ? "Selesai" : "Pending";
+        orders.unshift(order);
+        cart = [];
 
-    const order = {
-        id: "INV-" + Date.now(),
-        date: new Date().toISOString(),
-        customer,
-        phone,
-        type,
-        address,
-        shipping,
-        poNumber,
-        poDate,
-        notes: document.getElementById("notes").value.trim(),
-        items,
-        subtotal,
-        total: subtotal + shipping,
-        status: initialStatus
+        saveData();
+        updateCartCount();
+        showToast("Pesanan tersimpan & stok diperbarui!");
+
+        if (openWhatsApp) {
+            window.open(buildWhatsAppOrderUrl(order, resolvedAdminWa), "_blank", "noopener,noreferrer");
+        }
+
+        showPage("history");
     };
 
-    orders.unshift(order);
-    cart = [];
-
-    saveData();
-    updateCartCount();
-    showToast("Pesanan tersimpan & stok diperbarui!");
-
     if (openWhatsApp) {
-        window.open(buildWhatsAppOrderUrl(order), "_blank", "noopener,noreferrer");
+        ensureAdminWhatsApp(finalizeOrder, adminInputVal);
+    } else {
+        if (adminInputVal) {
+            const normalized = normalizeWhatsAppNumber(adminInputVal);
+            if (isValidWhatsAppNumber(normalized)) {
+                adminWhatsApp = normalized;
+            }
+        }
+        finalizeOrder(adminWhatsApp);
     }
-
-    showPage("history");
 }
 
 /* =========================
@@ -1429,6 +1672,7 @@ function viewOrder(id) {
 
     const isTakeAway = o.type === "Take Away";
     const isPO = o.type === "Request PO";
+    const isCompleted = o.status === "Selesai";
 
     document.getElementById("content").innerHTML = `
         <h2 class="page-title">Invoice Pesanan</h2>
@@ -1535,16 +1779,21 @@ function viewOrder(id) {
 
                 ${isPO ? `
                     <div style="margin-top:20px">
+                        ${isCompleted ? `
+                            <div class="locked-note">
+                                🔒 Status pesanan sudah <b>Selesai</b> dan dikunci. Status tidak dapat diubah lagi.
+                            </div>
+                        ` : ""}
                         <div class="form-group">
                             <label>Update Status PO</label>
-                            <select id="updateStatus">
+                            <select id="updateStatus" ${isCompleted ? "disabled" : ""}>
                                 ${["Pending","Diproses","Selesai","Dibatalkan"].map(s => `
                                     <option value="${s}" ${o.status === s ? "selected" : ""}>${s}</option>
                                 `).join("")}
                             </select>
                         </div>
-                        <button type="button" class="btn" onclick="updateOrderStatus('${o.id}')">
-                            Simpan Status
+                        <button type="button" class="btn" onclick="updateOrderStatus('${o.id}')" ${isCompleted ? "disabled" : ""}>
+                            ${isCompleted ? "Status Terkunci (Selesai)" : "Simpan Status"}
                         </button>
                     </div>
                 ` : ""}
@@ -1558,7 +1807,7 @@ function viewOrder(id) {
 
         <div class="invoice-actions">
             <button type="button" class="btn btn-secondary" onclick="showPage('history')">← Kembali</button>
-            <button type="button" class="btn btn-wa" onclick="shareOrderWhatsApp('${o.id}')">💬 Kirim WA</button>
+            <button type="button" class="btn btn-wa" onclick="shareOrderWhatsApp('${o.id}')">💬 Kirim WA ke Admin</button>
             <button type="button" class="btn" onclick="window.print()">🖨 Cetak Invoice / PDF</button>
         </div>
     `;
@@ -1567,7 +1816,12 @@ function viewOrder(id) {
 function shareOrderWhatsApp(id) {
     const order = orders.find(o => o.id === id);
     if (!order) return;
-    window.open(buildWhatsAppOrderUrl(order), "_blank", "noopener,noreferrer");
+
+    ensureAdminWhatsApp((resolvedAdminWa) => {
+        order.adminPhone = resolvedAdminWa;
+        saveData();
+        window.open(buildWhatsAppOrderUrl(order, resolvedAdminWa), "_blank", "noopener,noreferrer");
+    }, order.adminPhone || adminWhatsApp);
 }
 
 function confirmPickup(id) {
@@ -1587,10 +1841,14 @@ function updateOrderStatus(id) {
     const order = orders.find(o => o.id === id);
     if (!order || order.type !== "Request PO") return;
 
+    if (order.status === "Selesai") {
+        showToast("Status sudah Selesai dan tidak bisa diubah lagi!");
+        return;
+    }
+
     const nextStatus = document.getElementById("updateStatus").value;
     const prevStatus = order.status;
 
-    // Jika dibatalkan dari status aktif, kembalikan stok ke produk
     if (nextStatus === "Dibatalkan" && prevStatus !== "Dibatalkan") {
         order.items.forEach(item => {
             const p = getProduct(item.id);
@@ -1599,6 +1857,10 @@ function updateOrderStatus(id) {
     }
 
     order.status = nextStatus;
+    if (nextStatus === "Selesai") {
+        order.completedAt = new Date().toISOString();
+    }
+
     saveData();
     showToast("Status berhasil diperbarui!");
     viewOrder(id);
